@@ -10,6 +10,12 @@
 #define ANSI_BACKGROUND_RED "\e[41m"      // Fundo Vermelho
 #define MAX_TRANSACTIONS 100
 
+float cota_bit = 346861.93, cota_eth = 12980.41, cota_rip = 3.20;
+
+float *b = &cota_bit;
+float *e = &cota_eth;
+float *r = &cota_rip;
+
 typedef struct {
   char nome[50];
   char CPF[14];
@@ -114,8 +120,7 @@ int login() {
   Usuario user_arquivo;
   char senha[50];
 
-  printf(ANSI_COLOR_GREEN_BOLD
-         "=========== Login ===========\nPara realizar siga as seguintes instrucoes\n" ANSI_COLOR_RESET);
+  printf(ANSI_COLOR_GREEN_BOLD "=========== Login ===========\nPara realizar siga as seguintes instrucoes\n" ANSI_COLOR_RESET);
 
   // Inserir CPF
   printf(ANSI_COLOR_GREEN_UNDER "Insira seu CPF:" ANSI_COLOR_RESET " ");
@@ -250,9 +255,9 @@ void consultar_saldo(const char *cpf) {
   printf("CPF: %s\n", user.CPF);
   printf("=======================================\n");
   printf("Saldo em Reais: R$ %.2f\n", user.saldo);
-  printf("Saldo em Bitcoins: BTC %.6f\n", user.bit);
-  printf("Saldo em Ripple: XRP %.6f\n", user.rip);
-  printf("Saldo em Etherium: ETH %.6f\n", user.eth);
+  printf("Saldo em Bitcoins: BTC %.5f\n", user.bit);
+  printf("Saldo em Ripple: XRP %.5f\n", user.rip);
+  printf("Saldo em Etherium: ETH %.5f\n", user.eth);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -304,7 +309,7 @@ void depositar(const char *cpf) {
   }
 
   float valor = 0;
-  printf("Saldo: R$%.2f\n", user.saldo);
+  printf(ANSI_COLOR_GREEN_BOLD "Saldo: R$%.2f\n", user.saldo);
   printf(ANSI_COLOR_GREEN_UNDER
          "Digite o valor a ser depositado:" ANSI_COLOR_RESET " R$ ");
   if (scanf("%f", &valor) != 1) {
@@ -356,6 +361,7 @@ void sacar(const char *cpf) {
   }
 
   float valor;
+  printf(ANSI_COLOR_GREEN_BOLD "Saldo: R$%.2f\n", user.saldo);
   printf(ANSI_COLOR_GREEN_UNDER "Digite o valor a ser sacado:" ANSI_COLOR_RESET
                                 "R$ ");
   
@@ -410,7 +416,7 @@ void c_bitcoin(const char *cpf) {
   struct Data data_atual;
 
   printf(ANSI_COLOR_GREEN_BOLD);
-  printf("=========== Compra de Bitcoin ===========\nSelecione a quantidade que deseja comprar:");
+  printf("=========== Compra de Bitcoin ===========\nSelecione a quantidade que deseja comprar: ");
   if (scanf("%f", &valor) != 1) {
     printf(ANSI_BACKGROUND_RED "Entrada invalida.\n" ANSI_COLOR_RESET);
     while (getchar() != '\n')
@@ -424,13 +430,12 @@ void c_bitcoin(const char *cpf) {
         "Valor invalido. O valor deve ser maior que zero.\n" ANSI_COLOR_RESET);
     return;
   }
-  // if (valor <= 0) {
-  //   printf(ANSI_BACKGROUND_RED "Valor invalido. O valor colocado ultrapassa o "
-  //                              "saldo de sua conta.\n" ANSI_COLOR_RESET);
-  //   return;
-  // }
+  if (((valor*cota_bit)*1.02) > user.saldo) {
+    printf(ANSI_BACKGROUND_RED "Valor invalido. O valor colocado ultrapassa o saldo de sua conta.\n" ANSI_COLOR_RESET);
+    return;
+  }
   user.bit += valor;
-  user.saldo -= valor; // bit + 2%
+  user.saldo -= (valor*cota_bit)*1.02;
 
   // Verifica se ainda há espaço para uma nova transação
   if (user.num_transacoes < MAX_TRANSACTIONS) {
@@ -461,7 +466,7 @@ void c_ethereum(const char *cpf) {
   struct Data data_atual;
   
   printf(ANSI_COLOR_GREEN_BOLD);
-  printf("=========== Compra de Ethereum ===========\nSelecione a quantidade que deseja comprar:");
+  printf("=========== Compra de Ethereum ===========\nSelecione a quantidade que deseja comprar: ");
   if (scanf("%f", &valor) != 1) {
     printf(ANSI_BACKGROUND_RED "Entrada invalida.\n" ANSI_COLOR_RESET);
     while (getchar() != '\n')
@@ -475,13 +480,12 @@ void c_ethereum(const char *cpf) {
         "Valor invalido. O valor deve ser maior que zero.\n" ANSI_COLOR_RESET);
     return;
   }
-  // if (valor <= 0) {
-  //   printf(ANSI_BACKGROUND_RED "Valor invalido. O valor colocado ultrapassa o "
-  //                              "saldo de sua conta.\n" ANSI_COLOR_RESET);
-  //   return;
-  // }
+  if (((valor*cota_eth)*1.01) > user.saldo) {
+    printf(ANSI_BACKGROUND_RED "Valor invalido. O valor colocado ultrapassa o saldo de sua conta.\n" ANSI_COLOR_RESET);
+    return;
+  }
   user.eth += valor;
-  user.saldo -= valor; // eth + 1%
+  user.saldo -= (valor*cota_eth)*1.01;
 
   // Verifica se ainda há espaço para uma nova transação
   if (user.num_transacoes < MAX_TRANSACTIONS) {
@@ -512,7 +516,7 @@ void c_ripple(const char *cpf) {
   struct Data data_atual;
 
   printf(ANSI_COLOR_GREEN_BOLD);
-  printf("=========== Compra de Ripple ===========\nSelecione a quantidade que deseja comprar:");
+  printf("=========== Compra de Ripple ===========\nSelecione a quantidade que deseja comprar: ");
   if (scanf("%f", &valor) != 1) {
     printf(ANSI_BACKGROUND_RED "Entrada invalida.\n" ANSI_COLOR_RESET);
     while (getchar() != '\n')
@@ -526,13 +530,12 @@ void c_ripple(const char *cpf) {
         "Valor invalido. O valor deve ser maior que zero.\n" ANSI_COLOR_RESET);
     return;
   }
-  // if (valor <= 0) {
-  //   printf(ANSI_BACKGROUND_RED "Valor invalido. O valor colocado ultrapassa o "
-  //                              "saldo de sua conta.\n" ANSI_COLOR_RESET);
-  //   return;
-  // }
+  if (((valor*cota_rip)*1.01) > user.saldo) {
+    printf(ANSI_BACKGROUND_RED "Valor invalido. O valor colocado ultrapassa o saldo de sua conta.\n" ANSI_COLOR_RESET);
+    return;
+  }
   user.rip += valor;
-  user.saldo -= valor; // xrp + 1%
+  user.saldo -= (valor*cota_rip)*1.01;
 
   // Verifica se ainda há espaço para uma nova transação
   if (user.num_transacoes < MAX_TRANSACTIONS) {
@@ -561,7 +564,7 @@ void c_cripto(const char *cpf) {
   int escolha;
   printf(ANSI_COLOR_GREEN_BOLD);
   printf(
-      "=========== Compra de Criptomoeda ===========\nSelecione a criptomoeda que deseja comprar: 1-Bitcoin\n2-Ethereum\n3-Ripple");
+      "=========== Compra de Criptomoeda ===========\n1-Bitcoin\n2-Ethereum\n3-Ripple\nSelecione a criptomoeda que deseja comprar: ");
   printf(ANSI_COLOR_RESET);
   scanf("%d", &escolha);
   switch (escolha) {
@@ -586,7 +589,7 @@ void v_bitcoin(const char *cpf) {
   struct Data data_atual;
 
   printf(ANSI_COLOR_GREEN_BOLD);
-  printf("=========== Venda de Bitcoin ===========\nSelecione a quantidade que deseja vender:");
+  printf("=========== Venda de Bitcoin ===========\nSelecione a quantidade que deseja vender: ");
   if (scanf("%f", &valor) != 1) {
     printf(ANSI_BACKGROUND_RED "Entrada invalida.\n" ANSI_COLOR_RESET);
     while (getchar() != '\n')
@@ -605,7 +608,7 @@ void v_bitcoin(const char *cpf) {
     return;
   }
   user.bit -= valor;
-  user.saldo += valor; // bit - 3%
+  user.saldo += (valor*cota_bit)*0.97;
 
   // Verifica se ainda há espaço para uma nova transação
   if (user.num_transacoes < MAX_TRANSACTIONS) {
@@ -632,7 +635,7 @@ void v_ethereum(const char *cpf) {
   struct Data data_atual;
 
   printf(ANSI_COLOR_GREEN_BOLD);
-  printf("=========== Venda de Ethereum ===========\nSelecione a quantidade que deseja vender:");
+  printf("=========== Venda de Ethereum ===========\nSelecione a quantidade que deseja vender: ");
   if (scanf("%f", &valor) != 1) {
     printf(ANSI_BACKGROUND_RED "Entrada invalida.\n" ANSI_COLOR_RESET);
     while (getchar() != '\n')
@@ -651,7 +654,7 @@ void v_ethereum(const char *cpf) {
     return;
   }
   user.eth -= valor;
-  user.saldo += valor; // eth - 2%
+  user.saldo += (valor*cota_bit)*0.98;
 
   // Verifica se ainda há espaço para uma nova transação
   if (user.num_transacoes < MAX_TRANSACTIONS) {
@@ -678,7 +681,7 @@ void v_ripple(const char *cpf) {
   struct Data data_atual;
 
   printf(ANSI_COLOR_GREEN_BOLD);
-  printf("=========== Venda de Ripple ===========\nSelecione a quantidade que deseja vender:");
+  printf("=========== Venda de Ripple ===========\nSelecione a quantidade que deseja vender: ");
   if (scanf("%f", &valor) != 1) {
     printf(ANSI_BACKGROUND_RED "Entrada invalida.\n" ANSI_COLOR_RESET);
     while (getchar() != '\n')
@@ -695,7 +698,7 @@ void v_ripple(const char *cpf) {
     return;
   }
   user.rip -= valor;
-  user.saldo += valor; // xrp - 1%
+  user.saldo += (valor*cota_bit)*0.99;
 
   // Verifica se ainda há espaço para uma nova transação
   if (user.num_transacoes < MAX_TRANSACTIONS) {
@@ -740,21 +743,26 @@ void v_cripto(const char *cpf) {
 void cota(const char *cpf){
   int x;
   Usuario user;
+  printf(ANSI_COLOR_GREEN_BOLD);
   printf("=========== Atualização de Cotacoes ===========\n");
-  printf("Cotação Bitcoin(BTC): R$346.861,93\n");
-  printf("Cotação Ethereum(ETH): R$12.980,41\n");
-  printf("Cotação Ripple(XRP): R$3,20\n");
-  printf("\nAqui você pode acompanhar as cotações do nosso portfolio de criptomoedas. Deseja atualizar essas cotacoes?\n1-Sim\n2-Nao");
+  printf("Cotação Bitcoin(BTC): R$%.3f\n", cota_bit);
+  printf("Cotação Ethereum(ETH): R$%.3f\n", cota_eth);
+  printf("Cotação Ripple(XRP): R$%.3f\n", cota_rip);
+  printf("\nAqui você pode acompanhar as cotações do nosso portfolio de criptomoedas. Deseja atualizar essas cotacoes?\n1-Sim | 2-Nao\nSelecione uma opcao: ");
   printf(ANSI_COLOR_RESET);
   scanf("%d", &x);
   
   if (x == 1) {
     // Atualiza as cotações com variação aleatória
     srand(time(NULL));  // Inicializa o gerador de números aleatórios
-    double taxa1 = (rand() % 11 - 5) / 100.0;  // Gera valor entre -0.05 e 0.05
-    double taxa2 = (rand() % 11 - 5) / 100.0;
-    double taxa3 = (rand() % 11 - 5) / 100.0;
-    printf("\nCotacoes atualizadas.\n");
+    double taxa1 = 1.0 + (rand() % 11 - 5) / 100.0;  // Gera valor entre -0.05 e 0.05
+    float taxa2 = 1.0 + (rand() % 11 - 5) / 100.0;
+    float taxa3 = 1.0 + (rand() % 11 - 5) / 100.0;
+    
+    *b *= taxa1;
+    *e *= taxa2;
+    *r *= taxa3;
+    printf(ANSI_COLOR_GREEN_BOLD "\nCotacoes atualizadas.\n");
     menu(cpf, user.nome);
   } 
   else if (x == 2) {
@@ -809,8 +817,7 @@ void menu(const char *cpf, const char *nome) {
       v_cripto(cpf);
       break;
     case 7:
-      printf("Opção 7 selecionada\n");
-      // cota(cpf);
+      cota(cpf);
       break;
     case 8:
       printf(ANSI_COLOR_GREEN_BOLD
