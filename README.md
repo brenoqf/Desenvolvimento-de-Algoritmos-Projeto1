@@ -54,7 +54,6 @@ A função "salvar_usuario" é responsável por gravar os dados do usuário no a
 
 -= Carregar Usuário =-
 A função "carregar_usuario" lê os dados do usuário a partir do arquivo binário correspondente ao CPF fornecido. Ela abre o arquivo em modo de leitura binária, lê os dados para a estrutura Usuario e fecha o arquivo. Se o arquivo não for encontrado ou ocorrer algum erro durante a leitura, a função retorna um código de erro.
-=======================================
 
 -= Funções =-
 
