@@ -1,6 +1,6 @@
 # **Projeto 1 - Desenvolvimento de Algoritmos**
 
-## Objetivo:
+## Objetivo
 - O Exchange de Criptomoedas é um programa desenvolvido em C, para a matéria de Desenvolvimento de Algoritimos, que permite usuários gerenciar suas finanças em reais (R$) e três tipos de criptomoedas, tais sendo, Bitcoin (BTC), Ethereum (ETH) e Ripple (XRP). O sistema oferece as seguintes funcionalidades:
 
     - Cadastro: Efetuar login​ usando CPF e senha:
