@@ -27,6 +27,13 @@
 
 &nbsp;
 
+# Compliação e Execução
+ - Para compilar o código, abra o terminal do compilador ou IDE escolhida e siga o passo a passo:
+   - Digite: **gcc code.c -o code.exe** (onde está escrito "code", coloque o nome que você deu para o arquivo contendo o código)
+   - Após isso, digite: **.\code.exe**
+ - Com isso feito, o programa deve rolar normalmente.
+&nbsp;
+
 # **Structs**
 
 ## Usuário
