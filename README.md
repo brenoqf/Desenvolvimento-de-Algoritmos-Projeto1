@@ -32,6 +32,7 @@
    - Digite: **gcc code.c -o code.exe** (onde está escrito "code", coloque o nome que você deu para o arquivo contendo o código)
    - Após isso, digite: **.\code.exe**
  - Com isso feito, o programa deve rolar normalmente.
+   
 &nbsp;
 
 # **Structs**
