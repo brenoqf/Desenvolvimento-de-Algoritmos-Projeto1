@@ -66,7 +66,6 @@ O código está dividido em várias funções responsáveis por diferentes opera
 - **consultar_extrato:** Exibe o extrato de transações realizadas pelo usuário.
 - **depositar / sacar:** Permite que o usuário deposite ou retire dinheiro de sua conta.
 - **cota:** Exibe as cotações das criptomoedas e permite ao usuário atualizá-las.
-
 &nbsp;
 ## **Participantes**
 - Breno Queiroga Faustino R.A: 22124001-3
