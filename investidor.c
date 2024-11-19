@@ -3,12 +3,19 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include "main.h"
 
 #define ANSI_COLOR_GREEN_BOLD "\e[1;92m"  // Verde e Negrito
 #define ANSI_COLOR_GREEN_UNDER "\e[4;32m" // Verde e Sublinhado
 #define ANSI_COLOR_RESET "\x1b[0;37m"     // Branco
 #define ANSI_BACKGROUND_RED "\e[41m"      // Fundo Vermelho
 #define ANSI_COLOR_CYAN_BOLD " \e[1;36m"  // Ciano e Negrito
+#define MAX_TRANSACTIONS 100
+
+#define MAX_INVESTIDORES 100
+#define TAM_NOME 50
+#define TAM_CPF 12
+#define TAM_SENHA 9
 #define MAX_TRANSACTIONS 100
 
 float cota_bit = 346861.93, cota_eth = 12980.41, cota_rip = 3.20;
@@ -65,34 +72,48 @@ int salvar_usuario(const Usuario *user) {
 
 // Função para carregar os arquivos salvos
 int carregar_usuario(const char *cpf, Usuario *user) {
-  char filename[64];
-  snprintf(filename, sizeof(filename), "%s.dat", cpf);
+    FILE *file = fopen("usuarios.txt", "r");
+    if (file == NULL) {
+        printf("Erro ao abrir o arquivo.\n");
+        return -1; // Erro ao abrir o arquivo
+    }
 
-  FILE *file =
-      fopen(filename, "rb"); // "rb" para abrir em modo de leitura binária
-  if (file == NULL) {
-    return -1;
-  }
+    char linha[200]; // Buffer para armazenar a linha lida do arquivo
+    while (fgets(linha, sizeof(linha), file)) {
+        linha[strcspn(linha, "\n")] = 0; // Remove a quebra de linha, se houver
 
-  size_t read = fread(user, sizeof(Usuario), 1, file);
-  fclose(file);
+        // Variáveis temporárias para armazenar dados
+        char cpf_temp[TAM_CPF], nome_temp[TAM_NOME], senha_temp[TAM_SENHA];
+        float saldo_temp;
 
-  // Verifica se a leitura foi bem-sucedida
-  if (read != 1) {
-    return -1;
-  }
+        // Lê a linha com os dados do usuário
+        if (sscanf(linha, "%12s %99s %49s %f", cpf_temp, nome_temp, senha_temp, &saldo_temp) == 4) {
 
-  // Validação básica dos dados
-  if (user->num_transacoes < 0 || user->num_transacoes > MAX_TRANSACTIONS) {
-    return -1;
-  }
+            // Verifica se o CPF lido da linha corresponde ao CPF fornecido
+            if (strcmp(cpf_temp, cpf) == 0) {
 
-  return 0;
+                // Copia os dados para a estrutura Usuario
+                strcpy(user->CPF, cpf_temp);
+                strcpy(user->nome, nome_temp);
+                strcpy(user->senha, senha_temp);
+                user->saldo = saldo_temp; // Copia o saldo também
+
+                fclose(file); // Fecha o arquivo após encontrar o usuário
+                return 0; // Retorna sucesso
+            }
+        }
+    }
+
+    fclose(file); // Fecha o arquivo
+    return -1; // Retorna erro se o usuário não for encontrado
 }
 
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void menu(const char *cpf, const char *nome);
-void inicio();
+void iniciar();
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int validar_senha(const char *senha) {
@@ -118,7 +139,7 @@ int validar_cpf(const char *cpf) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Função de login
-int login() {
+int login_inv() {
   Usuario user;
   Usuario user_arquivo;
   char senha[50];
@@ -129,40 +150,42 @@ int login() {
 
   // Inserir CPF
   printf(ANSI_COLOR_GREEN_UNDER "Insira seu CPF:" ANSI_COLOR_RESET " ");
-  scanf("%13s", user.CPF);
+  scanf("%13s", user.CPF);  // Lê o CPF
 
   // Inserir senha
   printf(ANSI_COLOR_GREEN_UNDER "Insira sua senha:" ANSI_COLOR_RESET " ");
-  scanf("%49s", senha);
+  scanf("%49s", senha);  // Lê a senha
 
   // Verificar se o CPF foi cadastrado e carregar dados
   if (carregar_usuario(user.CPF, &user_arquivo) != 0) {
     printf(ANSI_BACKGROUND_RED
            "Usuario com CPF %s nao encontrado." ANSI_COLOR_RESET "\n\n",
            user.CPF);
-    inicio();
-    return -1;
+    iniciar();  // Redireciona para o início
+    return -1;  // Retorna erro, usuário não encontrado
   }
 
   // Verificar se o nome e a senha correspondem
   if (strcmp(senha, user_arquivo.senha) == 0) {
     printf(ANSI_COLOR_GREEN_BOLD
            "Login realizado com sucesso.\n" ANSI_COLOR_RESET);
+    // Chama o menu do usuário, passando CPF e nome
     menu(user_arquivo.CPF, user_arquivo.nome);
   } else {
     printf(ANSI_BACKGROUND_RED "Nome ou senha incorretos.\n" ANSI_COLOR_RESET
                                "\n");
-    inicio();
-    return -1;
+    iniciar();  // Redireciona para o início
+    return -1;  // Retorna erro, senha ou nome incorretos
   }
 
-  return 0;
+  return 0;  // Retorna sucesso
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Função de cadastro
-int cadastro() {
+int cadastro_inv() {
   Usuario user;
   char senha[50], confsenha[50];
 
@@ -215,7 +238,7 @@ int cadastro() {
     printf(ANSI_BACKGROUND_RED "Informacoes inseridas incorretamente, por "
                                "favor, insira-as novamente\n" ANSI_COLOR_RESET
                                "\n\n");
-    cadastro();
+    cadastro_inv();
   }
   return 0;
 }
@@ -223,7 +246,7 @@ int cadastro() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Função que mostra as opções de cadastro e login
-void inicio() {
+void iniciar() {
   int escolha;
   printf(ANSI_COLOR_CYAN_BOLD
          "====== Seja bem-vindo ao Exchange de Criptomoedas "
@@ -234,17 +257,17 @@ void inicio() {
 
   while (escolha != 1 && escolha != 2) {
     printf(ANSI_BACKGROUND_RED
-           "Opcao não existente, por favor, insira novamente\n" ANSI_COLOR_RESET
+           "Opcao nao existente, por favor, insira novamente\n" ANSI_COLOR_RESET
            "\n");
     scanf("%d", &escolha);
   }
 
   if (escolha == 1) {
     printf("\n");
-    login();
+    login_inv();
   } else if (escolha == 2) {
     printf("\n");
-    cadastro();
+    cadastro_inv();
   }
 }
 
@@ -276,40 +299,42 @@ void consultar_saldo(const char *cpf) {
 
 // Função de consultar os extratos da conta logada
 void consultar_extrato(const char *cpf) {
-  Usuario user;
-  // Carrega os dados do usuário a partir do arquivo
-  if (carregar_usuario(cpf, &user) != 0) {
-    printf(ANSI_BACKGROUND_RED "Erro ao carregar usuario.\n" ANSI_COLOR_RESET);
-    return;
-  }
-
-  // Exibe informações básicas do usuário
-  printf(ANSI_COLOR_CYAN_BOLD
-         "\n=========== Consultar Extrato ===========\n" ANSI_COLOR_RESET);
-  printf(ANSI_COLOR_GREEN_BOLD);
-  printf("Nome: %s\n", user.nome);
-  printf("CPF: %s\n", user.CPF);
-  printf("Saldo: R$%.2f\n", user.saldo);
-  printf(ANSI_COLOR_RESET);
-
-  // Verifica se o usuário tem transações registradas
-  if (user.num_transacoes == 0) {
-    printf(ANSI_COLOR_GREEN_UNDER
-           "Nenhuma transacao realizada até o momento.\n" ANSI_COLOR_RESET);
-  } else {
-    // Exibe cada transação registrada
-    printf(ANSI_COLOR_GREEN_BOLD "Transacoes:\n" ANSI_COLOR_RESET);
-    for (int i = 0; i < user.num_transacoes; i++) {
-      // Verifica se a transação está preenchida
-      if (strlen(user.transacoes[i]) > 0) {
-        printf(ANSI_COLOR_RESET);
-        printf("%d. %s\n", i + 1, user.transacoes[i]);
-        printf(ANSI_COLOR_RESET);
-      }
+    Usuario user;
+    // Carrega os dados do usuário a partir do arquivo
+    if (carregar_usuario(cpf, &user) != 0) {
+        printf(ANSI_BACKGROUND_RED "Erro ao carregar usuario.\n" ANSI_COLOR_RESET);
+        return;
     }
-  }
-}
 
+    // Exibe informações básicas do usuário
+    printf(ANSI_COLOR_CYAN_BOLD
+           "\n=========== Consultar Extrato ===========\n" ANSI_COLOR_RESET);
+    printf(ANSI_COLOR_GREEN_BOLD);
+    printf("Nome: %s\n", user.nome);
+    printf("CPF: %s\n", user.CPF);
+    printf("Saldo: R$%.2f\n", user.saldo);
+    printf("Bitcoin (BTC): %.2f\n", user.bit);
+    printf("Ethereum (ETH): %.2f\n", user.eth);
+    printf("Ripple (XRP): %.2f\n", user.rip);
+    printf(ANSI_COLOR_RESET);
+
+    // Verifica se o usuário tem transações registradas
+    if (user.num_transacoes == 0) {
+        printf(ANSI_COLOR_GREEN_UNDER
+               "Nenhuma transacao realizada ate o momento.\n" ANSI_COLOR_RESET);
+    } else {
+        // Exibe cada transação registrada
+        printf(ANSI_COLOR_GREEN_BOLD "Transacoes:\n" ANSI_COLOR_RESET);
+        for (int i = 0; i < user.num_transacoes; i++) {
+            // Verifica se a transação está preenchida
+            if (strlen(user.transacoes[i]) > 0) {
+                printf(ANSI_COLOR_RESET);
+                printf("%d. %s\n", i + 1, user.transacoes[i]);
+                printf(ANSI_COLOR_RESET);
+            }
+        }
+    }
+}
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Função de depositar dinheiro na conta logada
@@ -356,13 +381,13 @@ void depositar(const char *cpf) {
     printf(ANSI_COLOR_GREEN_BOLD
            "Deposito realizado com sucesso.\n" ANSI_COLOR_RESET);
   } else {
-    printf(ANSI_BACKGROUND_RED "Limite de transacoes atingido. Não é possível "
+    printf(ANSI_BACKGROUND_RED "Limite de transacoes atingido. Nao e possível "
                                "registrar mais transacoes.\n" ANSI_COLOR_RESET);
   }
 
   if (salvar_usuario(&user) != 0) {
     printf(ANSI_BACKGROUND_RED
-           "Erro ao atualizar informações.\n" ANSI_COLOR_RESET);
+           "Erro ao atualizar informacoes.\n" ANSI_COLOR_RESET);
   }
 }
 
@@ -979,16 +1004,11 @@ void menu(const char *cpf, const char *nome) {
       printf(ANSI_COLOR_GREEN_BOLD
              "Tudo Bem. Aguarde um momento.\nSaindo da conta...\nConta "
              "deslogada com sucesso.\n" ANSI_COLOR_RESET "\n");
-      inicio();
+      iniciar();
       break;
     default:
       printf("Opção invalida. Tente novamente.\n");
       break;
     }
   }
-}
-
-int main() {
-  inicio();
-  return 0;
 }
