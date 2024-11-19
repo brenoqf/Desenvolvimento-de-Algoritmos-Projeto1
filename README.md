@@ -41,7 +41,7 @@ Cada usuário tem um limite de transações. O sistema impede que o número de t
    Compile o código C com um compilador, como o `gcc`:
 
    ```bash
-   gcc -o criptosistema main.c
+   gcc main.c admin.c investidor.c -o main.exe
 Executar o Sistema Execute o sistema compilado:
 
 bash
