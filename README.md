@@ -58,12 +58,12 @@ Cada usuário tem um limite de transações. O sistema impede que o número de t
 ### **Estrutura do Código**
 O código está dividido em várias funções responsáveis por diferentes operações. Aqui estão algumas das principais:
 &nbsp;
-**menu:** Exibe o menu principal do sistema e chama as funções apropriadas com base na escolha do usuário.
-**c_cripto / v_cripto:** Funções para compra e venda de criptomoedas, respectivamente.
-**consultar_saldo:** Exibe o saldo atual do usuário em criptomoedas e em dinheiro.
-**consultar_extrato:** Exibe o extrato de transações realizadas pelo usuário.
-**depositar / sacar:** Permite que o usuário deposite ou retire dinheiro de sua conta.
-**cota:** Exibe as cotações das criptomoedas e permite ao usuário atualizá-las.
+- **menu:** Exibe o menu principal do sistema e chama as funções apropriadas com base na escolha do usuário.
+- **c_cripto / v_cripto:** Funções para compra e venda de criptomoedas, respectivamente.
+- **consultar_saldo:** Exibe o saldo atual do usuário em criptomoedas e em dinheiro.
+- **consultar_extrato:** Exibe o extrato de transações realizadas pelo usuário.
+- **depositar / sacar:** Permite que o usuário deposite ou retire dinheiro de sua conta.
+- **cota:** Exibe as cotações das criptomoedas e permite ao usuário atualizá-las.
 
 &nbsp;
 ## **Participantes**
