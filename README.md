@@ -1,73 +1,79 @@
-# Projeto 3 - Desenvolvimento de Algoritimo
+# Projeto 3 - Desenvolvimento de Algoritmo
 
-Este é um sistema simples em C para gerenciamento de contas de usuários e transações com criptomoedas. O sistema permite que os usuários realizem operações de compra e venda de Bitcoin, Ethereum e Ripple, além de consultar saldo, extrato e atualizar cotações das criptomoedas.
+Este é um sistema simples em C para gerenciamento de contas de usuários e transações com criptomoedas. O sistema permite que os usuários realizem operações de cadastro e login, além de realizar ações de compra e venda de criptomoedas. Ele possui um menu de navegação com opções para investidores e administradores.
 
 ## Funcionalidades
 
 ### 1. **Cadastro e Login de Usuário**
-O sistema permite o cadastro de usuários com informações básicas, como CPF, nome e senha. Após o login, o usuário pode acessar o menu principal e realizar operações com sua conta.
+O sistema permite o cadastro de usuários do tipo **Investidor** e **Administrador**, onde cada um pode realizar ações específicas dentro do sistema:
+- **Investidor** pode comprar e vender criptomoedas, consultar saldo, extrato e realizar transações.
+- **Administrador** pode cadastrar novos usuários e gerenciar as opções do sistema.
 
 ### 2. **Menu de Navegação**
-O menu principal exibe várias opções para o usuário, incluindo:
-- Consultar saldo
-- Consultar extrato de transações
-- Realizar depósitos e saques
-- Comprar e vender criptomoedas
-- Atualizar as cotações das criptomoedas
+O menu inicial do sistema oferece as seguintes opções:
+- **1. Cadastro Investidor**
+- **2. Login Investidor**
+- **3. Cadastro Administrador**
+- **4. Login Administrador**
 
-### 3. **Compra e Venda de Criptomoedas**
-O sistema oferece suporte para a compra e venda das seguintes criptomoedas:
-- **Bitcoin (BTC)**
-- **Ethereum (ETH)**
-- **Ripple (XRP)**
+Com base na escolha do usuário, o sistema direciona para a função apropriada, permitindo a interação com a plataforma de criptomoedas.
 
-O usuário pode selecionar a quantidade desejada para comprar ou vender, e as transações são registradas com a data e hora.
+### 3. **Cadastro de Investidor**
+Os investidores podem se cadastrar inserindo informações básicas como CPF, nome e senha, e podem fazer login posteriormente usando essas credenciais.
 
-### 4. **Atualização de Cotações**
-O usuário pode visualizar as cotações atuais das criptomoedas e optar por atualizá-las. A atualização é realizada com uma variação aleatória entre -5% e +5% para cada criptomoeda.
+### 4. **Cadastro e Login de Administrador**
+Os administradores podem ser cadastrados com nome e senha e acessar a plataforma para gerenciar os usuários e outras funções administrativas.
 
-### 5. **Taxas de Transação**
-As transações de venda de criptomoedas aplicam uma taxa:
-- **Bitcoin**: 3% de comissão
-- **Ethereum**: 2% de comissão
-- **Ripple**: 1% de comissão
-
-### 6. **Limite de Transações**
-Cada usuário tem um limite de transações. O sistema impede que o número de transações ultrapasse o máximo definido (`MAX_TRANSACTIONS`).
+### 5. **Verificação de Opções**
+O sistema valida as entradas do usuário, garantindo que ele escolha uma opção válida entre as fornecidas.
 
 ## Como Usar
 
-1. **Compilar o Código**
+1. **Compilar o Código**  
    Compile o código C com um compilador, como o `gcc`:
-
    ```bash
-   gcc main.c admin.c investidor.c -o main.exe 
-2. **Executar o Sistema** Execute o sistema compilado:
-&nbsp;
+   gcc main.c admin.c investidor.c -o main.exe
+
+2. **Executar o Sistema**  
+Execute o sistema compilado:
    ```bash
-   ./criptosistema
+   ./main.exe
 
-3. **Cadastro de Usuário** O sistema solicitará o CPF, nome e senha do usuário durante o processo de cadastro. Após o cadastro, o usuário pode fazer login utilizando seu CPF e senha.
-&nbsp;
+3. **Cadastro de Usuário**  
+Ao iniciar o sistema, o usuário deve escolher uma das opções do menu para se cadastrar como Investidor ou Administrador. Após o cadastro, o usuário pode fazer login para acessar a plataforma.
 
-4. **Operações** Após o login, o usuário pode escolher entre diversas opções no menu principal, incluindo:
+4. **Operações de Menu**  
+Após o login, o usuário poderá realizar ações conforme o tipo de conta:
+- **Investidor**: Comprar e vender criptomoedas, consultar saldo e extrato, entre outras operações.
+- **Administrador**: Gerenciar usuários, cadastrar e realizar login de investidores.
 
-- Consultar saldo e extrato
-- Comprar ou vender criptomoedas
-- Atualizar cotações
-- Sair do sistema
-&nbsp;
 ## **Estrutura do Código**
+
 O código está dividido em várias funções responsáveis por diferentes operações. Aqui estão algumas das principais:
-&nbsp;
-- **menu:** Exibe o menu principal do sistema e chama as funções apropriadas com base na escolha do usuário.
-- **c_cripto / v_cripto:** Funções para compra e venda de criptomoedas, respectivamente.
-- **consultar_saldo:** Exibe o saldo atual do usuário em criptomoedas e em dinheiro.
-- **consultar_extrato:** Exibe o extrato de transações realizadas pelo usuário.
-- **depositar / sacar:** Permite que o usuário deposite ou retire dinheiro de sua conta.
-- **cota:** Exibe as cotações das criptomoedas e permite ao usuário atualizá-las.
-&nbsp;
-## **Participantes**
+
+- **`inicio`**: Função que exibe o menu inicial e permite ao usuário escolher entre as opções de cadastro e login para Investidores ou Administradores.
+- **`cadastro_inv`**: Função que permite o cadastro de um novo Investidor no sistema.
+- **`login_inv`**: Função para realizar o login de um Investidor registrado no sistema.
+- **`cadastrar_administrador`**: Função para cadastrar um novo Administrador no sistema.
+- **`login_administrador`**: Função para realizar o login de um Administrador.
+- **Validação de Entrada**: O sistema valida as entradas dos usuários para garantir que apenas opções válidas sejam selecionadas.
+
+### Funções Principais
+
+- **`inicio`**: Exibe o menu principal e chama as funções apropriadas com base na escolha do usuário.
+- **`cadastro_inv`**: Permite o cadastro de um novo investidor.
+- **`login_inv`**: Permite que o investidor faça login no sistema.
+- **`cadastrar_administrador`**: Permite o cadastro de um administrador.
+- **`login_administrador`**: Permite que o administrador faça login no sistema.
+
+### Arquivos
+
+- **`main.c`**: Arquivo principal que contém a lógica do sistema, incluindo o menu e as opções de interação com o usuário.
+- **`admin.c`**: Arquivo que contém as funções relacionadas ao administrador, como cadastro e login.
+- **`investidor.c`**: Arquivo que contém as funções relacionadas aos investidores, incluindo o cadastro e login.
+
+## Participantes
+
 - Breno Queiroga Faustino R.A: 22124001-3
 - Rafael Levi Ramos Fernandes R.A: 22124057-5
 - Vinicius Brasileiro Nobre R.A: 22124013-8
