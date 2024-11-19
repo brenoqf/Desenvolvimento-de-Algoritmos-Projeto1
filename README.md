@@ -57,7 +57,7 @@ Cada usuário tem um limite de transações. O sistema impede que o número de t
 - Atualizar cotações
 - Sair do sistema
 &nbsp;
-# **Estrutura do Código**
+## **Estrutura do Código**
 O código está dividido em várias funções responsáveis por diferentes operações. Aqui estão algumas das principais:
 &nbsp;
 - **menu:** Exibe o menu principal do sistema e chama as funções apropriadas com base na escolha do usuário.
