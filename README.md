@@ -49,11 +49,14 @@ Cada usuário tem um limite de transações. O sistema impede que o número de t
 ```
 3. **Cadastro de Usuário** O sistema solicitará o CPF, nome e senha do usuário durante o processo de cadastro. Após o cadastro, o usuário pode fazer login utilizando seu CPF e senha.
 &nbsp;
-4. Operações Após o login, o usuário pode escolher entre diversas opções no menu principal, incluindo:
+
+4. **Operações** Após o login, o usuário pode escolher entre diversas opções no menu principal, incluindo:
+5. 
 - Consultar saldo e extrato
 - Comprar ou vender criptomoedas
 - Atualizar cotações
 - Sair do sistema
+- 
 &nbsp;
 ### **Estrutura do Código**
 O código está dividido em várias funções responsáveis por diferentes operações. Aqui estão algumas das principais:
