@@ -56,7 +56,6 @@ Cada usuário tem um limite de transações. O sistema impede que o número de t
 - Comprar ou vender criptomoedas
 - Atualizar cotações
 - Sair do sistema
-
 &nbsp;
 ### **Estrutura do Código**
 O código está dividido em várias funções responsáveis por diferentes operações. Aqui estão algumas das principais:
