@@ -1,4 +1,4 @@
-# Sistema de Gestão de Criptomoedas
+# Projeto 3 - Desenvolvimento de Algoritimo
 
 Este é um sistema simples em C para gerenciamento de contas de usuários e transações com criptomoedas. O sistema permite que os usuários realizem operações de compra e venda de Bitcoin, Ethereum e Ripple, além de consultar saldo, extrato e atualizar cotações das criptomoedas.
 
@@ -41,35 +41,32 @@ Cada usuário tem um limite de transações. O sistema impede que o número de t
    Compile o código C com um compilador, como o `gcc`:
 
    ```bash
-   gcc main.c admin.c investidor.c -o main.exe
-Executar o Sistema Execute o sistema compilado:
-
-bash
-Copiar código
+   gcc main.c admin.c investidor.c -o main.exe 
+2. **Executar o Sistema** Execute o sistema compilado:
+&nbsp;
+```bash
 ./criptosistema
-Cadastro de Usuário O sistema solicitará o CPF, nome e senha do usuário durante o processo de cadastro. Após o cadastro, o usuário pode fazer login utilizando seu CPF e senha.
-
-Operações Após o login, o usuário pode escolher entre diversas opções no menu principal, incluindo:
-
-Consultar saldo e extrato
-Comprar ou vender criptomoedas
-Atualizar cotações
-Sair do sistema
-Atenção ao Saldo O sistema verifica o saldo do usuário antes de permitir a venda de criptomoedas, garantindo que o valor que o usuário deseja vender não ultrapasse o saldo disponível.
-
-Estrutura do Código
+```
+3. **Cadastro de Usuário** O sistema solicitará o CPF, nome e senha do usuário durante o processo de cadastro. Após o cadastro, o usuário pode fazer login utilizando seu CPF e senha.
+&nbsp;
+4. Operações Após o login, o usuário pode escolher entre diversas opções no menu principal, incluindo:
+- Consultar saldo e extrato
+- Comprar ou vender criptomoedas
+- Atualizar cotações
+- Sair do sistema
+&nbsp;
+### **Estrutura do Código**
 O código está dividido em várias funções responsáveis por diferentes operações. Aqui estão algumas das principais:
+&nbsp;
+**menu:** Exibe o menu principal do sistema e chama as funções apropriadas com base na escolha do usuário.
+**c_cripto / v_cripto:** Funções para compra e venda de criptomoedas, respectivamente.
+**consultar_saldo:** Exibe o saldo atual do usuário em criptomoedas e em dinheiro.
+**consultar_extrato:** Exibe o extrato de transações realizadas pelo usuário.
+**depositar / sacar:** Permite que o usuário deposite ou retire dinheiro de sua conta.
+**cota:** Exibe as cotações das criptomoedas e permite ao usuário atualizá-las.
 
-menu: Exibe o menu principal do sistema e chama as funções apropriadas com base na escolha do usuário.
-c_cripto / v_cripto: Funções para compra e venda de criptomoedas, respectivamente.
-consultar_saldo: Exibe o saldo atual do usuário em criptomoedas e em dinheiro.
-consultar_extrato: Exibe o extrato de transações realizadas pelo usuário.
-depositar / sacar: Permite que o usuário deposite ou retire dinheiro de sua conta.
-cota: Exibe as cotações das criptomoedas e permite ao usuário atualizá-las.
-Dependências
-O código não possui dependências externas além da biblioteca padrão do C.
-
-Limitações
-Segurança: A senha dos usuários é armazenada como texto simples. Para melhorar a segurança, seria interessante implementar uma função de criptografia de senha.
-Persistência de Dados: O sistema depende de funções como carregar_usuario e salvar_usuario, que não estão detalhadas. Certifique-se de que a persistência de dados esteja funcionando corretamente.
-Interface: A interface de usuário é baseada no console e pode ser melhorada com uma interface gráfica, se necessário.
+&nbsp;
+## **Participantes**
+- Breno Queiroga Faustino R.A: 22124001-3
+- Rafael Levi Ramos Fernandes R.A: 22124057-5
+- Vinicius Brasileiro Nobre R.A: 22124013-8
