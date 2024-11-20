@@ -3,6 +3,10 @@
 #include <string.h>
 #include <ctype.h>
 #include <time.h>
+#include <sys/stat.h>
+#include <errno.h> 
+#include <direct.h>
+#include <windows.h>
 #include "investidor.h"
 #include "main.h"
 
@@ -15,7 +19,7 @@
 #define GREEN_BOLD "\e[1;92m"  // Verde e Negrito
 #define GREEN_UNDER "\e[4;32m" // Verde e Sublinhado
 #define RESET "\x1b[0;37m"     // Branco
-#define BACKGROUND_RED "\e[41m"      // Fundo Vermelho
+#define BACKGROUND_VERMEI "\e[41m"      // Fundo Vermelho
 #define CYAN_BOLD " \e[1;36m"  // Ciano e Negrito
 
 typedef struct {
@@ -38,9 +42,12 @@ typedef struct {
 typedef struct {
     char nome[10];
     float preco;
+    float taxa_compra;
+    float taxa_venda;
+    float cotacao;
 } Criptomoeda;
 
-int opcoes();
+int principal();
 
 void limpar_buffer() {
     int c;
@@ -49,97 +56,150 @@ void limpar_buffer() {
 
 int valida_cpf(const char *cpf) {
     if (strlen(cpf) != 11) {
-        printf(BACKGROUND_RED "cpf invalido. Deve conter 11 digitos.\n" RESET);
+        printf(BACKGROUND_VERMEI "cpf invalido. Deve conter 11 digitos.\n" RESET);
         return 0;
     }
     for (int i = 0; i < 11; i++) {
         if (!isdigit(cpf[i])) {
-            printf(BACKGROUND_RED "cpf deve conter apenas numeros.\n" RESET);
+            printf(BACKGROUND_VERMEI "cpf deve conter apenas numeros.\n" RESET);
             return 0;
         }
     }
     return 1;
 }
 
-int carregar_dados_administrador(Administrador *admin) {
-    FILE *file = fopen("admin_cadastrado.dat", "rb");
-    if (file == NULL) {
-        perror("Erro ao abrir o arquivo de dados do administrador");
-        return 0;
-    }
-
-    // Tentativa de leitura dos dados
-    size_t read_size = fread(admin, sizeof(Administrador), 1, file);
-    if (read_size != 1) {
-        printf(BACKGROUND_RED "Erro ao ler os dados do administrador.\n" RESET);
-        fclose(file);
-        return 0;
-    }
-
-    fclose(file);
-    return 1;
-}
-
 int salvar_dados_administrador(const Administrador *admin) {
-    FILE *file = fopen("admin_cadastrado.dat", "wb"); 
+     // Nome da pasta
+    const char *diretorio = "Admins";
+    
+    // Verificar se o diretório "Investidores" existe, caso contrário, criá-lo
+    struct stat st = {0};
+    if (stat(diretorio, &st) == -1) { // Verifica se o diretório não existe
+        if (_mkdir(diretorio) != 0) { // Cria o diretório no Windows
+            perror("Erro ao criar o diretorio");
+            return -1;
+        }
+    }
+
+    // Montar o caminho completo do arquivo dentro da pasta "Investidores"
+    char filename[128];
+    snprintf(filename, sizeof(filename), "%s/%s.dat", diretorio, admin->cpf);
+
+    // Abrir o arquivo no modo binário para escrita
+    FILE *file = fopen(filename, "wb");
     if (file == NULL) {
-        perror("Erro ao abrir o arquivo para salvar os dados do administrador");
+        perror("Erro ao abrir o arquivo");
         return -1;
     }
 
-    // Tentativa de escrita dos dados
-    size_t write_size = fwrite(admin, sizeof(Administrador), 1, file);
-    if (write_size != 1) {
-        printf(BACKGROUND_RED "Erro ao salvar os dados do administrador.\n" RESET);
-        fclose(file);
-        return -1;
-    }
-
+    // Escrever os dados do usuario no arquivo
+    fwrite(admin, sizeof(Usuario), 1, file);
     fclose(file);
     return 0;
 }
 
+int carregar_dados_administrador(const char *cpf, Administrador *admin) {
+    // Diretório onde os arquivos dos investidores estão salvos
+    const char *diretorio = "Admins";
+
+    // Monta o nome do arquivo com base no CPF
+    char filename[128];
+    snprintf(filename, sizeof(filename), "%s\\%s.dat", diretorio, cpf); 
+
+    // Abrir o arquivo do investidor no modo binário para leitura
+    FILE *file = fopen(filename, "rb");
+    if (file == NULL) {
+        perror("Erro ao abrir o arquivo do investidor");
+        return -1; // Erro ao abrir o arquivo
+    }
+
+    // Ler os dados do investidor do arquivo
+    if (fread(admin, sizeof(Usuario), 1, file) != 1) {
+        perror("Erro ao ler os dados do arquivo");
+        fclose(file);
+        return -1; // Erro ao ler os dados
+    }
+
+    fclose(file); // Fecha o arquivo
+    return 0; // Retorna sucesso
+}
+
 
 int carregar_dados_investidores(Investidor investidores[], int *num_investidores) {
-    *num_investidores = 0;  
+    *num_investidores = 0;  // Inicializa o contador de investidores
 
+    // Nome do diretorio onde os arquivos dos investidores estão armazenados
+    const char *diretorio = "Investidores";
+
+    // Verifica se o diretorio "Investidores" existe
+    struct stat st = {0};
+    if (stat(diretorio, &st) == -1) {
+        printf("O diretorio '%s' não existe.\n", diretorio);
+        return 0; // Se o diretorio não existe, retorna 0
+    }
+
+    // Percorre os arquivos do diretorio "Investidores" (limitado a MAX_INVESTIDORES)
     for (int i = 0; i < MAX_INVESTIDORES; i++) {
-        Investidor investidor;
-        char filename[64];
-        snprintf(filename, sizeof(filename), "%s.dat", investidores[i].cpf);
+        char filename[128];
+        snprintf(filename, sizeof(filename), "%s\\%s.dat", diretorio, investidores[i].cpf); // Nome do arquivo com base no CPF
 
         FILE *file = fopen(filename, "rb");
         if (file == NULL) {
-            continue;
+            continue; // Se o arquivo não existir, pula para o próximo
         }
-        fread(&investidor, sizeof(Investidor), 1, file);
+
+        // Lê os dados do investidor do arquivo
+        if (fread(&investidores[*num_investidores], sizeof(Investidor), 1, file) == 1) {
+            (*num_investidores)++; // Incrementa o contador se a leitura for bem-sucedida
+        }
+
         fclose(file);
 
-        investidores[*num_investidores] = investidor;
-        (*num_investidores)++; 
+        // Verifica o limite de investidores
+        if (*num_investidores >= MAX_INVESTIDORES) {
+            break; // Evita ultrapassar o tamanho máximo do array
+        }
     }
 
-    return 1;  
+    return *num_investidores > 0; // Retorna 1 se pelo menos um investidor foi carregado
 }
+
 
 // Salvar os dados dos investidores
 int salvar_dados_investidores(const Investidor investidores[], int num_investidores) {
-    for (int i = 0; i < num_investidores; i++) {
-        char filename[64];
-        snprintf(filename, sizeof(filename), "%s.dat", investidores[i].cpf);
+    // Nome da pasta onde os arquivos serão salvos
+    const char *diretorio = "Investidores";
 
+    // Verificar se o diretorio "Investidores" existe, caso contrário, criá-lo
+    struct stat st = {0};
+    if (stat(diretorio, &st) == -1) { // Verifica se o diretorio não existe
+        if (_mkdir(diretorio) != 0) { // Cria o diretorio no Windows
+            perror("Erro ao criar o diretorio");
+            return -1;
+        }
+    }
+
+    // Percorre os investidores e salva cada um em um arquivo específico
+    for (int i = 0; i < num_investidores; i++) {
+        // Montar o caminho completo do arquivo dentro do diretorio "Investidores"
+        char filename[128];
+        snprintf(filename, sizeof(filename), "%s\\%s.dat", diretorio, investidores[i].cpf);
+
+        // Abrir o arquivo no modo binário para escrita
         FILE *file = fopen(filename, "wb");
         if (file == NULL) {
-            printf(BACKGROUND_RED "Erro ao abrir o arquivo para salvar o investidor %s.\n" RESET, investidores[i].cpf);
-            continue;
+            printf(BACKGROUND_VERMEI "Erro ao abrir o arquivo para salvar o investidor %s.\n" RESET, investidores[i].cpf);
+            continue; // Ignora e continua com os próximos investidores
         }
 
+        // Escrever os dados do investidor no arquivo
         fwrite(&investidores[i], sizeof(Investidor), 1, file);
         fclose(file);
     }
 
-    return 1;
+    return 1; // Retorna sucesso
 }
+
 
 void cadastrar_administrador(Administrador *admin) {
     printf(GREEN_UNDER "Digite o cpf do administrador (11 digitos): " RESET);
@@ -155,13 +215,13 @@ void cadastrar_administrador(Administrador *admin) {
     limpar_buffer();
 
     if (strlen(admin->senha) > 8) {
-        printf(BACKGROUND_RED "Senha invalida! Deve ter ate 8 caracteres.\n"RESET);
+        printf(BACKGROUND_VERMEI "Senha invalida! Deve ter ate 8 caracteres.\n"RESET);
         return;
     }
 
     if (salvar_dados_administrador(admin)) {
         printf(GREEN_BOLD "Administrador cadastrado com sucesso.\n" RESET);
-        opcoes();
+        principal();
     }
 }
 
@@ -178,10 +238,10 @@ int login_administrador(const Administrador *admin) {
 
     if (strcmp(admin->cpf, cpf) == 0 && strcmp(admin->senha, senha) == 0) {
         printf(GREEN_BOLD "Login bem-sucedido!\n" RESET);
-        opcoes();
+        principal();
         return 1;
     } else {
-        printf(BACKGROUND_RED "cpf ou senha incorretos.\n" RESET);
+        printf(BACKGROUND_VERMEI "cpf ou senha incorretos.\n" RESET);
         return 0;
     }
 }
@@ -209,7 +269,7 @@ void adicionar_investidor(Investidor investidores[], int *num_investidores) {
 
     FILE *file = fopen(filename, "wb");
     if (file == NULL) {
-        printf(BACKGROUND_RED "Erro ao abrir o arquivo de investidor.\n" RESET);
+        printf(BACKGROUND_VERMEI "Erro ao abrir o arquivo de investidor.\n" RESET);
         return;
     }
 
@@ -223,63 +283,196 @@ void adicionar_investidor(Investidor investidores[], int *num_investidores) {
     (*num_investidores)++;
 }
 
-void listar_investidores(const Investidor investidores[], int num_investidores) {
-    if (num_investidores == 0) {
-        printf(BACKGROUND_RED "Nenhum investidor cadastrado.\n" RESET);
+void listar_investidores() {
+    WIN32_FIND_DATA findFileData;
+    HANDLE hFind = FindFirstFile("Investidores\\*.dat", &findFileData);  // Usando FindFirstFile para listar arquivos no diretorio
+
+    if (hFind == INVALID_HANDLE_VALUE) {
+        printf(BACKGROUND_VERMEI "Erro ao abrir o diretorio de investidores.\n" RESET);
         return;
     }
 
-    printf("\nLista de Investidores:\n");
+    int count = 0;
+    printf("\n" CYAN_BOLD "Lista de Investidores:" RESET "\n");
     printf(GREEN_BOLD "----------------------------------------------------\n" RESET);
-    for (int i = 0; i < num_investidores; i++) {
-        printf(GREEN_BOLD "Investidor %d:\n" RESET, i + 1);
-        printf(GREEN_BOLD "Nome: %s\n" RESET, investidores[i].nome);
-        printf(GREEN_BOLD "cpf: %s\n" RESET, investidores[i].cpf);
-        printf(GREEN_BOLD "Saldo: R$ %.2f\n" RESET, investidores[i].saldo);
-        printf(GREEN_BOLD "----------------------------------------------------\n" RESET);
+
+    do {
+        // Ignora diretorios especiais "." e ".."
+        if (strcmp(findFileData.cFileName, ".") != 0 && strcmp(findFileData.cFileName, "..") != 0) {
+            char filename[128];
+            snprintf(filename, sizeof(filename), "Investidores\\%s", findFileData.cFileName);
+
+            // Abre o arquivo do investidor
+            FILE *file = fopen(filename, "rb");
+            if (file == NULL) {
+                printf(BACKGROUND_VERMEI "Erro ao abrir o arquivo %s.\n" RESET, filename);
+                continue;
+            }
+
+            Investidor investidor;
+            size_t read_size = fread(&investidor, sizeof(Investidor), 1, file);
+            if (read_size != 1) {
+                printf(BACKGROUND_VERMEI "Erro ao ler os dados do investidor %s.\n" RESET, findFileData.cFileName);
+                fclose(file);
+                continue;
+            }
+
+            // Exibe os dados do investidor
+            printf(GREEN_BOLD "Investidor %d:\n" RESET, count + 1);
+            printf(GREEN_BOLD "Nome: %s\n" RESET, investidor.nome);
+            printf(GREEN_BOLD "CPF: %s\n" RESET, investidor.cpf);
+            printf(GREEN_BOLD "Saldo: R$ %.2f\n" RESET, investidor.saldo);
+            printf(GREEN_BOLD "----------------------------------------------------\n" RESET);
+
+            fclose(file);
+            count++;
+        }
+    } while (FindNextFile(hFind, &findFileData) != 0);  // Continua buscando até não encontrar mais arquivos
+
+    FindClose(hFind);  // Fecha o manipulador do diretorio
+
+    if (count == 0) {
+        printf(BACKGROUND_VERMEI "Nenhum investidor cadastrado no diretorio." RESET "\n");
     }
 }
 
 void deletar_investidor(Investidor investidores[], int *num_investidores) {
+    if (*num_investidores == 0) {
+        printf(BACKGROUND_VERMEI "Nenhum investidor cadastrado para deletar." RESET "\n");
+        return; // Não há investidores para deletar
+    }
+
     int index;
 
+    // Exibe a lista de investidores numerados
     printf(GREEN_UNDER "Digite o numero do investidor para deletar (1 a %d): " RESET, *num_investidores);
     if (scanf("%d", &index) != 1 || index < 1 || index > *num_investidores) {
-        printf(BACKGROUND_RED "Numero invalido!\n" RESET);
+        printf(BACKGROUND_VERMEI "Numero invalido!\n" RESET);
         limpar_buffer();
         return;
     }
     limpar_buffer();
 
-    // Remover o arquivo do investidor
-    char filename[64];
-    snprintf(filename, sizeof(filename), "%s.dat", investidores[index - 1].cpf);  // Nome do arquivo baseado no cpf
+    // Ajusta o índice para o array, que é baseado em 0
+    index--; 
+
+    // Verificar se o diretorio "Investidores" existe, caso contrário, criar
+    if (CreateDirectory("Investidores", NULL) == 0 && GetLastError() != ERROR_ALREADY_EXISTS) {
+        printf("Erro ao criar diretorio 'Investidores'. Código de erro: %lu\n", GetLastError());
+        return;
+    }
+
+    // Montar o caminho completo do arquivo para deletar o investidor
+    char filename[128];
+    snprintf(filename, sizeof(filename), "Investidores\\%s.dat", investidores[index].cpf);  // Nome do arquivo baseado no cpf
+
+    // Imprimir o nome do arquivo para depuração
+    printf("Tentando deletar o arquivo: %s\n", filename);
+
+    // Verifique se o arquivo existe antes de tentar removê-lo
+    FILE *arquivo = fopen(filename, "r");
+    if (arquivo == NULL) {
+        printf("Arquivo não encontrado: %s\n", filename);  // Arquivo não encontrado
+        return;
+    }
+    fclose(arquivo);  // Fechar o arquivo, pois ele existe
+
+    // Tentar deletar o arquivo
     if (remove(filename) == 0) {
-        printf(GREEN_BOLD "Arquivo do investidor %s deletado com sucesso.\n" RESET, investidores[index - 1].cpf);
+        printf(GREEN_BOLD "Arquivo do investidor %s deletado com sucesso." RESET "\n", investidores[index].cpf);
     } else {
-        printf(BACKGROUND_RED "Erro ao deletar o arquivo do investidor.\n" RESET);
+        perror("Erro ao deletar o arquivo");
+        return;
     }
 
     // Remover o investidor da lista
-    for (int i = index - 1; i < *num_investidores - 1; i++) {
+    for (int i = index; i < *num_investidores - 1; i++) {
         investidores[i] = investidores[i + 1];
     }
-    (*num_investidores)--;
+    (*num_investidores)--; // Reduz o número de investidores
 
     printf(GREEN_BOLD "Investidor deletado com sucesso.\n" RESET);
 }
 
-void atualizar_cotacoes(float *bitcoin, float *ethereum, float *ripple) {
-    srand(time(NULL));
-    *bitcoin += ((rand() % 2000) - 1000) / 100.0;
-    *ethereum += ((rand() % 1000) - 500) / 100.0;
-    *ripple += ((rand() % 100) - 50) / 100.0;
+void cadastrar_criptomoeda(Criptomoeda *cripto, int *num_cripto) {
+    printf(GREEN_UNDER "Digite o nome da criptomoeda (ex: Bitcoin): " RESET);
+    scanf("%s", cripto[*num_cripto].nome);
+    printf(GREEN_UNDER "Digite o preço inicial da criptomoeda: " RESET);
+    scanf("%f", &cripto[*num_cripto].preco);
+    printf(GREEN_UNDER "Digite a taxa de compra da criptomoeda: " RESET);
+    scanf("%f", &cripto[*num_cripto].taxa_compra);
+    printf(GREEN_UNDER "Digite a taxa de venda da criptomoeda: " RESET);
+    scanf("%f", &cripto[*num_cripto].taxa_venda);
 
-    if (*bitcoin < 0) *bitcoin = 0;
-    if (*ethereum < 0) *ethereum = 0;
-    if (*ripple < 0) *ripple = 0;
+    (*num_cripto)++;
+    printf(GREEN_BOLD "Criptomoeda %s cadastrada com sucesso!\n" RESET, cripto[*num_cripto - 1].nome);
+}
 
-    printf("Cotacoes atualizadas: Bitcoin: %.2f, Ethereum: %.2f, Ripple: %.2f\n", *bitcoin, *ethereum, *ripple);
+void excluir_criptomoeda(Criptomoeda *cripto, int *num_cripto) {
+    int index;
+    printf(GREEN_UNDER "Informe o número da criptomoeda a ser excluída: " RESET);
+    scanf("%d", &index);
+    if (index < 1 || index > *num_cripto) {
+        printf(BACKGROUND_VERMEI "Criptomoeda não encontrada.\n" RESET);
+        return;
+    }
+
+    for (int i = index - 1; i < *num_cripto - 1; i++) {
+        cripto[i] = cripto[i + 1];
+    }
+
+    (*num_cripto)--;
+    printf(GREEN_BOLD "Criptomoeda excluída com sucesso!\n" RESET);
+}
+
+void consultar_saldo_investidor(Investidor investidores[], int num_investidores) {
+    char cpf[TAM_cpf];
+    printf(GREEN_UNDER "Informe o CPF do investidor para consultar o saldo: " RESET);
+    scanf("%s", cpf);
+
+    for (int i = 0; i < num_investidores; i++) {
+        if (strcmp(investidores[i].cpf, cpf) == 0) {
+            printf(GREEN_BOLD "Saldo do investidor %s: R$ %.2f\n" RESET, investidores[i].nome, investidores[i].saldo);
+            return;
+        }
+    }
+
+    printf(BACKGROUND_VERMEI "Investidor não encontrado.\n" RESET);
+}
+
+void consultar_extrato_investidor(Investidor investidores[], int num_investidores) {
+    char cpf[TAM_cpf];
+    printf(GREEN_UNDER "Informe o CPF do investidor para consultar o extrato: " RESET);
+    scanf("%s", cpf);
+
+    for (int i = 0; i < num_investidores; i++) {
+        if (strcmp(investidores[i].cpf, cpf) == 0) {
+            printf(GREEN_BOLD "Extrato do investidor %s:\n" RESET, investidores[i].nome);
+            for (int j = 0; j < investidores[i].num_transacoes; j++) {
+                printf(GREEN_BOLD " - %s\n" RESET, investidores[i].transacoes[j]);
+            }
+            return;
+        }
+    }
+
+    printf(BACKGROUND_VERMEI "Investidor não encontrado.\n" RESET);
+}
+
+void atualizar_cotacoes(Criptomoeda *criptos, int num_cripto) {
+    srand(time(NULL));  // Inicializa a semente aleatória
+
+    for (int i = 0; i < num_cripto; i++) {
+        // Atualiza a cotação de cada criptomoeda de forma aleatória
+        criptos[i].cotacao += ((rand() % 2000) - 1000) / 100.0;  // Variação entre -10 e +10
+
+        // Garante que a cotação não seja negativa
+        if (criptos[i].cotacao < 0) {
+            criptos[i].cotacao = 0;
+        }
+
+        // Exibe a cotação atualizada
+        printf("Cotação atualizada de %s: %.2f\n", criptos[i].nome, criptos[i].cotacao);
+    }
 }
 
 void exibir_menu_principal() {
@@ -294,53 +487,60 @@ void exibir_menu_principal() {
     printf(GREEN_BOLD "0. Sair\n" RESET);
 }
 
-int opcoes() {
-    Administrador admin = { "", "" };
+int principal() {
+    Administrador admin;
     Investidor investidores[MAX_INVESTIDORES];
-    int num_investidores = 0;
-    float bitcoin = 50000.0, ethereum = 3000.0, ripple = 1.0;
-    int escolha;
+    Criptomoeda criptos[MAX_CRIPTOS];
+    int num_investidores = 0, num_cripto = 0;
 
-    carregar_dados_administrador(&admin);
-    carregar_dados_investidores(investidores, &num_investidores);
+    if (!carregar_dados_administrador("admin", &admin)) {
+        cadastrar_administrador(&admin); // Caso não haja dados, faz o cadastro
+    }
 
-    while (1) {
+    if (!login_administrador(&admin)) {
+        return 0;  // Retorna 0 caso o login falhe
+    }
+
+    int opcao;
+    do {
+        // Exibe o menu principal
         exibir_menu_principal();
-        printf(GREEN_UNDER "Escolha uma opcao: " RESET);
-        if (scanf("%d", &escolha) != 1) {
-            printf(BACKGROUND_RED "Entrada invalida!\n" RESET);
-            limpar_buffer();
-            continue;
-        }
+
+        // Lê a opção do usuário
+        printf(GREEN_UNDER "Escolha uma opção: " RESET);
+        scanf("%d", &opcao);
         limpar_buffer();
 
-        switch (escolha) {
+        switch (opcao) {
             case 1:
-                cadastrar_administrador(&admin);
+                adicionar_investidor(investidores, &num_investidores);  // Adiciona um novo investidor
                 break;
             case 2:
-                if (login_administrador(&admin)) {
-                    printf(GREEN_BOLD "Acesso permitido.\n" RESET);
-                }
+                listar_investidores();  // Lista todos os investidores
                 break;
             case 3:
-                adicionar_investidor(investidores, &num_investidores);
+                cadastrar_criptomoeda(criptos, &num_cripto);  // Cadastra uma nova criptomoeda
                 break;
             case 4:
-                listar_investidores(investidores, num_investidores);
+                excluir_criptomoeda(criptos, &num_cripto);  // Exclui uma criptomoeda
                 break;
             case 5:
-                deletar_investidor(investidores, &num_investidores);
+                consultar_saldo_investidor(investidores, num_investidores);  // Consulta o saldo de um investidor
                 break;
             case 6:
-                atualizar_cotacoes(&bitcoin, &ethereum, &ripple);
+                consultar_extrato_investidor(investidores, num_investidores);  // Consulta o extrato de um investidor
+                break;
+            case 7:
+                atualizar_cotacoes(criptos, MAX_CRIPTOS);
                 break;
             case 0:
-                printf(GREEN_BOLD "Saindo...\n" RESET);
-                inicio();
+                printf("Saindo...\n");
                 break;
             default:
-                printf(BACKGROUND_RED "Opcao invalida!\n" RESET);
+                printf(BACKGROUND_VERMEI "Opção inválida. Tente novamente.\n" RESET);
+                break;
         }
-    }
+    } while (opcao != 0);  // Continua até o usuário escolher sair
+
+    return 0;
 }
