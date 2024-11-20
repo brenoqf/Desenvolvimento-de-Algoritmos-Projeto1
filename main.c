@@ -16,7 +16,7 @@ void inicio() {
   int escolha;
   printf(CYAN_BOLD
          "====== Seja bem-vindo ao Exchange de Criptomoedas "
-         "======" GREEN_BOLD "\nEscolha uma das opcoes a "
+         "======" GREEN_BOLD "\nEscolha uma das principal a "
          "seguir:\n\n1.Cadastro Investidor\n2.Login Investidor\n3.Cadastro Administrador\n4.Login Administrador\n" RESET);
   printf(GREEN_UNDER "Insira sua escolha:" RESET " ");
   scanf("%d", &escolha);
@@ -42,6 +42,7 @@ void inicio() {
           Administrador admin;
           printf("\n");
           cadastrar_administrador(&admin);
+          principal();
         }
         break;
     case 4:
@@ -49,6 +50,7 @@ void inicio() {
           Administrador admin;
           printf("\n");
           login_administrador(&admin);
+          if(login_administrador(&admin))principal();
         }
         break;
     default:
