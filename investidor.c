@@ -3,7 +3,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <sys/stat.h>
+#include <errno.h> 
+#include <direct.h>
 #include "main.h"
+#include "admin.h"
 
 #define ANSI_COLOR_GREEN_BOLD "\e[1;92m"  // Verde e Negrito
 #define ANSI_COLOR_GREEN_UNDER "\e[4;32m" // Verde e Sublinhado
@@ -52,67 +56,69 @@ void dia_hora(struct Data *d) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// Função para salvar um usuário em um arquivo .dat
+// Função para salvar um usuario em um arquivo .dat
 int salvar_usuario(const Usuario *user) {
-  char filename[64];
-  snprintf(filename, sizeof(filename), "%s.dat", user->CPF);
+    // Nome da pasta
+    const char *diretorio = "Admins";
+    
+    // Verificar se o diretório "Investidores" existe, caso contrário, criá-lo
+    struct stat st = {0};
+    if (stat(diretorio, &st) == -1) { // Verifica se o diretório não existe
+        if (_mkdir(diretorio) != 0) { // Cria o diretório no Windows
+            perror("Erro ao criar o diretorio");
+            return -1;
+        }
+    }
 
-  FILE *file =
-      fopen(filename, "wb"); // "wb" para abrir em modo de escrita binária
-  if (file == NULL) {
-    perror("Erro ao abrir o arquivo");
-    return -1;
-  }
-  fwrite(user, sizeof(Usuario), 1, file);
-  fclose(file);
-  return 0;
+    // Montar o caminho completo do arquivo dentro da pasta "Investidores"
+    char filename[128];
+    snprintf(filename, sizeof(filename), "%s/%s.dat", diretorio, user->CPF);
+
+    // Abrir o arquivo no modo binário para escrita
+    FILE *file = fopen(filename, "wb");
+    if (file == NULL) {
+        perror("Erro ao abrir o arquivo");
+        return -1;
+    }
+
+    // Escrever os dados do usuario no arquivo
+    fwrite(user, sizeof(Usuario), 1, file);
+    fclose(file);
+    return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Função para carregar os arquivos salvos
 int carregar_usuario(const char *cpf, Usuario *user) {
-    FILE *file = fopen("usuarios.txt", "r");
+    // Diretório onde os arquivos dos investidores estão salvos
+    const char *diretorio = "Admins";
+
+    // Monta o nome do arquivo com base no CPF
+    char filename[128];
+    snprintf(filename, sizeof(filename), "%s\\%s.dat", diretorio, cpf); // Use '\\' para Windows
+
+    // Abrir o arquivo do investidor no modo binário para leitura
+    FILE *file = fopen(filename, "rb");
     if (file == NULL) {
-        printf("Erro ao abrir o arquivo.\n");
+        perror("Erro ao abrir o arquivo do investidor");
         return -1; // Erro ao abrir o arquivo
     }
 
-    char linha[200]; // Buffer para armazenar a linha lida do arquivo
-    while (fgets(linha, sizeof(linha), file)) {
-        linha[strcspn(linha, "\n")] = 0; // Remove a quebra de linha, se houver
-
-        // Variáveis temporárias para armazenar dados
-        char cpf_temp[TAM_CPF], nome_temp[TAM_NOME], senha_temp[TAM_SENHA];
-        float saldo_temp;
-
-        // Lê a linha com os dados do usuário
-        if (sscanf(linha, "%12s %99s %49s %f", cpf_temp, nome_temp, senha_temp, &saldo_temp) == 4) {
-
-            // Verifica se o CPF lido da linha corresponde ao CPF fornecido
-            if (strcmp(cpf_temp, cpf) == 0) {
-
-                // Copia os dados para a estrutura Usuario
-                strcpy(user->CPF, cpf_temp);
-                strcpy(user->nome, nome_temp);
-                strcpy(user->senha, senha_temp);
-                user->saldo = saldo_temp; // Copia o saldo também
-
-                fclose(file); // Fecha o arquivo após encontrar o usuário
-                return 0; // Retorna sucesso
-            }
-        }
+    // Ler os dados do investidor do arquivo
+    if (fread(user, sizeof(Usuario), 1, file) != 1) {
+        perror("Erro ao ler os dados do arquivo");
+        fclose(file);
+        return -1; // Erro ao ler os dados
     }
 
     fclose(file); // Fecha o arquivo
-    return -1; // Retorna erro se o usuário não for encontrado
+    return 0; // Retorna sucesso
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void menu(const char *cpf, const char *nome);
-void iniciar();
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -161,20 +167,20 @@ int login_inv() {
     printf(ANSI_BACKGROUND_RED
            "Usuario com CPF %s nao encontrado." ANSI_COLOR_RESET "\n\n",
            user.CPF);
-    iniciar();  // Redireciona para o início
-    return -1;  // Retorna erro, usuário não encontrado
+    inicio();  // Redireciona para o início
+    return -1;  // Retorna erro, usuario não encontrado
   }
 
   // Verificar se o nome e a senha correspondem
   if (strcmp(senha, user_arquivo.senha) == 0) {
     printf(ANSI_COLOR_GREEN_BOLD
            "Login realizado com sucesso.\n" ANSI_COLOR_RESET);
-    // Chama o menu do usuário, passando CPF e nome
+    // Chama o menu do usuario, passando CPF e nome
     menu(user_arquivo.CPF, user_arquivo.nome);
   } else {
     printf(ANSI_BACKGROUND_RED "Nome ou senha incorretos.\n" ANSI_COLOR_RESET
                                "\n");
-    iniciar();  // Redireciona para o início
+    inicio();  // Redireciona para o início
     return -1;  // Retorna erro, senha ou nome incorretos
   }
 
@@ -245,39 +251,11 @@ int cadastro_inv() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// Função que mostra as opções de cadastro e login
-void iniciar() {
-  int escolha;
-  printf(ANSI_COLOR_CYAN_BOLD
-         "====== Seja bem-vindo ao Exchange de Criptomoedas "
-         "======" ANSI_COLOR_GREEN_BOLD "\nEscolha uma das opcoes a "
-         "seguir:\n\n1.Login\n2.Cadastro\n" ANSI_COLOR_RESET);
-  printf(ANSI_COLOR_GREEN_UNDER "Insira sua escolha:" ANSI_COLOR_RESET " ");
-  scanf("%d", &escolha);
-
-  while (escolha != 1 && escolha != 2) {
-    printf(ANSI_BACKGROUND_RED
-           "Opcao nao existente, por favor, insira novamente\n" ANSI_COLOR_RESET
-           "\n");
-    scanf("%d", &escolha);
-  }
-
-  if (escolha == 1) {
-    printf("\n");
-    login_inv();
-  } else if (escolha == 2) {
-    printf("\n");
-    cadastro_inv();
-  }
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 // Função de consultar o saldo da conta logada
 void consultar_saldo(const char *cpf) {
   Usuario user;
 
-  // Carrega os dados do usuário a partir do arquivo
+  // Carrega os dados do usuario a partir do arquivo
   if (carregar_usuario(cpf, &user) != 0) {
     printf(ANSI_BACKGROUND_RED "Erro ao carregar usuario.\n" ANSI_COLOR_RESET);
     return;
@@ -300,13 +278,13 @@ void consultar_saldo(const char *cpf) {
 // Função de consultar os extratos da conta logada
 void consultar_extrato(const char *cpf) {
     Usuario user;
-    // Carrega os dados do usuário a partir do arquivo
+    // Carrega os dados do usuario a partir do arquivo
     if (carregar_usuario(cpf, &user) != 0) {
         printf(ANSI_BACKGROUND_RED "Erro ao carregar usuario.\n" ANSI_COLOR_RESET);
         return;
     }
 
-    // Exibe informações básicas do usuário
+    // Exibe informações básicas do usuario
     printf(ANSI_COLOR_CYAN_BOLD
            "\n=========== Consultar Extrato ===========\n" ANSI_COLOR_RESET);
     printf(ANSI_COLOR_GREEN_BOLD);
@@ -318,7 +296,7 @@ void consultar_extrato(const char *cpf) {
     printf("Ripple (XRP): %.2f\n", user.rip);
     printf(ANSI_COLOR_RESET);
 
-    // Verifica se o usuário tem transações registradas
+    // Verifica se o usuario tem transações registradas
     if (user.num_transacoes == 0) {
         printf(ANSI_COLOR_GREEN_UNDER
                "Nenhuma transacao realizada ate o momento.\n" ANSI_COLOR_RESET);
@@ -399,7 +377,7 @@ void sacar(const char *cpf) {
   struct Data data_atual;
 
   if (carregar_usuario(cpf, &user) != 0) {
-    printf(ANSI_BACKGROUND_RED "Erro ao carregar usuário.\n" ANSI_COLOR_RESET);
+    printf(ANSI_BACKGROUND_RED "Erro ao carregar usuario.\n" ANSI_COLOR_RESET);
     return;
   }
 
@@ -463,9 +441,9 @@ void c_bitcoin(const char *cpf) {
   float valor;
   struct Data data_atual;
 
-  // Carrega os dados do usuário
+  // Carrega os dados do usuario
   if (carregar_usuario(cpf, &user) != 0) {
-    printf(ANSI_BACKGROUND_RED "Erro ao carregar usuário.\n" ANSI_COLOR_RESET
+    printf(ANSI_BACKGROUND_RED "Erro ao carregar usuario.\n" ANSI_COLOR_RESET
                                "\n");
     return;
   }
@@ -525,9 +503,9 @@ void c_ethereum(const char *cpf) {
   float valor;
   struct Data data_atual;
 
-  // Carrega os dados do usuário
+  // Carrega os dados do usuario
   if (carregar_usuario(cpf, &user) != 0) {
-    printf(ANSI_BACKGROUND_RED "Erro ao carregar usuário.\n" ANSI_COLOR_RESET
+    printf(ANSI_BACKGROUND_RED "Erro ao carregar usuario.\n" ANSI_COLOR_RESET
                                "\n");
     return;
   }
@@ -587,9 +565,9 @@ void c_ripple(const char *cpf) {
   float valor;
   struct Data data_atual;
 
-  // Carrega os dados do usuário
+  // Carrega os dados do usuario
   if (carregar_usuario(cpf, &user) != 0) {
-    printf(ANSI_BACKGROUND_RED "Erro ao carregar usuário.\n" ANSI_COLOR_RESET
+    printf(ANSI_BACKGROUND_RED "Erro ao carregar usuario.\n" ANSI_COLOR_RESET
                                "\n");
     return;
   }
@@ -672,9 +650,9 @@ void v_bitcoin(const char *cpf) {
   float valor;
   struct Data data_atual;
 
-  // Carrega os dados do usuário
+  // Carrega os dados do usuario
   if (carregar_usuario(cpf, &user) != 0) {
-    printf(ANSI_BACKGROUND_RED "Erro ao carregar usuário.\n" ANSI_COLOR_RESET
+    printf(ANSI_BACKGROUND_RED "Erro ao carregar usuario.\n" ANSI_COLOR_RESET
                                "\n");
     return;
   }
@@ -733,9 +711,9 @@ void v_ethereum(const char *cpf) {
   float valor;
   struct Data data_atual;
 
-  // Carrega os dados do usuário
+  // Carrega os dados do usuario
   if (carregar_usuario(cpf, &user) != 0) {
-    printf(ANSI_BACKGROUND_RED "Erro ao carregar usuário.\n" ANSI_COLOR_RESET
+    printf(ANSI_BACKGROUND_RED "Erro ao carregar usuario.\n" ANSI_COLOR_RESET
                                "\n");
     return;
   }
@@ -795,9 +773,9 @@ void v_ripple(const char *cpf) {
   float valor;
   struct Data data_atual;
 
-  // Carrega os dados do usuário
+  // Carrega os dados do usuario
   if (carregar_usuario(cpf, &user) != 0) {
-    printf(ANSI_BACKGROUND_RED "Erro ao carregar usuário.\n" ANSI_COLOR_RESET
+    printf(ANSI_BACKGROUND_RED "Erro ao carregar usuario.\n" ANSI_COLOR_RESET
                                "\n");
     return;
   }
@@ -879,9 +857,9 @@ void cota(const char *cpf) {
   int x;
   Usuario user;
 
-  // Carrega os dados do usuário
+  // Carrega os dados do usuario
   if (carregar_usuario(cpf, &user) != 0) {
-    printf(ANSI_BACKGROUND_RED "Erro ao carregar usuário.\n" ANSI_COLOR_RESET
+    printf(ANSI_BACKGROUND_RED "Erro ao carregar usuario.\n" ANSI_COLOR_RESET
                                "\n");
     return;
   }
@@ -889,9 +867,9 @@ void cota(const char *cpf) {
   printf(ANSI_COLOR_CYAN_BOLD);
   printf("=========== Atualização de Cotacoes "
          "===========\n" ANSI_COLOR_GREEN_BOLD);
-  printf("Cotação Bitcoin(BTC): R$%.3f\n", cota_bit);
-  printf("Cotação Ethereum(ETH): R$%.3f\n", cota_eth);
-  printf("Cotação Ripple(XRP): R$%.3f\n", cota_rip);
+  printf("Cotacao Bitcoin(BTC): R$%.3f\n", cota_bit);
+  printf("Cotacao Ethereum(ETH): R$%.3f\n", cota_eth);
+  printf("Cotacao Ripple(XRP): R$%.3f\n", cota_rip);
   printf("\nAqui você pode acompanhar as cotações do nosso portfolio de "
          "criptomoedas. Deseja atualizar essas cotacoes?\n1-Sim | "
          "2-Nao\nSelecione uma opcao: ");
@@ -927,7 +905,7 @@ void menu(const char *cpf, const char *nome) {
   Usuario user;
 
   if (carregar_usuario(cpf, &user) != 0) {
-    printf(ANSI_BACKGROUND_RED "Erro ao carregar usuário.\n" ANSI_COLOR_RESET
+    printf(ANSI_BACKGROUND_RED "Erro ao carregar usuario.\n" ANSI_COLOR_RESET
                                "\n");
     return;
   }
@@ -936,7 +914,7 @@ void menu(const char *cpf, const char *nome) {
     printf(ANSI_COLOR_CYAN_BOLD);
     printf("\n ========== Menu do Investidor ========== \n");
     printf(ANSI_COLOR_GREEN_BOLD);
-    printf("Bem-vindo, %s!\n", user.nome); // Exibe o nome do usuário
+    printf("Bem-vindo, %s!\n", user.nome); // Exibe o nome do usuario
     printf("1. Consultar saldo\n");
     printf("2. Consultar extrato\n");
     printf("3. Depositar\n");
@@ -1004,7 +982,7 @@ void menu(const char *cpf, const char *nome) {
       printf(ANSI_COLOR_GREEN_BOLD
              "Tudo Bem. Aguarde um momento.\nSaindo da conta...\nConta "
              "deslogada com sucesso.\n" ANSI_COLOR_RESET "\n");
-      iniciar();
+             inicio();
       break;
     default:
       printf("Opção invalida. Tente novamente.\n");
