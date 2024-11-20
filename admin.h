@@ -35,5 +35,6 @@ int salvar_dados_investidores(const Investidor investidores[], int num_investido
 void adicionar_investidor(const Investidor *investidor);
 void listar_investidores(const Investidor investidores[], int num_investidores);
 void deletar_investidor(Investidor investidores[], int *num_investidores);
+int principal();
 
 #endif // ADMIN_H
